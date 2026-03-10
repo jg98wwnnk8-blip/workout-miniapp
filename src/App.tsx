@@ -22,6 +22,7 @@ type TelegramWebAppWindow = Window & {
 type ViewMode = 'history' | 'search' | 'detail';
 
 export function App(): JSX.Element {
+  const buildTag = 'debug-20260310-1';
   const [token, setToken] = useState<string>('');
   const [initDataInput, setInitDataInput] = useState<string>('');
   const [workouts, setWorkouts] = useState<WorkoutListItem[]>([]);
@@ -179,6 +180,8 @@ export function App(): JSX.Element {
       <header className="header">
         <h1>Workout Mini App</h1>
         <p className="muted">История тренировок, детали и поиск</p>
+        <p className="muted">Build: {buildTag}</p>
+        {debugInfo && <p className="muted">Debug: {debugInfo}</p>}
         {hasToken && (
           <div className="tabs">
             <button className={view === 'history' ? 'tab active' : 'tab'} onClick={() => setView('history')}>
