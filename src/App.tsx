@@ -195,7 +195,6 @@ export function App(): JSX.Element {
         <section className="panel">
           <h3>Авторизация</h3>
           <p className="muted">Если Mini App открыт не из Telegram, вставь initData вручную:</p>
-          {debugInfo && <p className="muted">Debug: {debugInfo}</p>}
           <textarea
             value={initDataInput}
             onChange={(e) => setInitDataInput(e.target.value)}
