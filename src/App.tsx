@@ -22,7 +22,6 @@ type TelegramWebAppWindow = Window & {
 type ViewMode = 'history' | 'search' | 'detail';
 
 export function App(): JSX.Element {
-  const buildTag = 'debug-20260310-1';
   const [token, setToken] = useState<string>('');
   const [initDataInput, setInitDataInput] = useState<string>('');
   const [workouts, setWorkouts] = useState<WorkoutListItem[]>([]);
@@ -32,7 +31,6 @@ export function App(): JSX.Element {
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [view, setView] = useState<ViewMode>('history');
-  const [debugInfo, setDebugInfo] = useState<string>('');
 
   const hasToken = useMemo(() => Boolean(token), [token]);
 
@@ -64,19 +62,7 @@ export function App(): JSX.Element {
         .finally(() => setLoading(false));
     };
 
-    const reportDebug = (initDataValue: string) => {
-      const hasTelegram = Boolean(tgWindow.Telegram?.WebApp);
-      const info = [
-        `telegram=${hasTelegram ? 'yes' : 'no'}`,
-        `initDataLen=${initDataValue.length}`,
-        `urlDataLen=${initDataFromUrl.length}`,
-        `url=${window.location.href}`
-      ].join(' | ');
-      setDebugInfo(info);
-    };
-
     const initData = tgWindow.Telegram?.WebApp?.initData || initDataFromUrl;
-    reportDebug(initData || '');
     if (initData) {
       tryAuth(initData);
       return;
@@ -86,7 +72,6 @@ export function App(): JSX.Element {
     const timer = window.setInterval(() => {
       attempts += 1;
       const liveInitData = tgWindow.Telegram?.WebApp?.initData || '';
-      reportDebug(liveInitData || initDataFromUrl);
       if (liveInitData) {
         window.clearInterval(timer);
         tryAuth(liveInitData);
@@ -180,8 +165,6 @@ export function App(): JSX.Element {
       <header className="header">
         <h1>Workout Mini App</h1>
         <p className="muted">История тренировок, детали и поиск</p>
-        <p className="muted">Build: {buildTag}</p>
-        {debugInfo && <p className="muted">Debug: {debugInfo}</p>}
         {hasToken && (
           <div className="tabs">
             <button className={view === 'history' ? 'tab active' : 'tab'} onClick={() => setView('history')}>
