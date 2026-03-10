@@ -45,7 +45,13 @@ export function App(): JSX.Element {
       setToken(savedToken);
     }
 
-    const initData = tgWindow.Telegram?.WebApp?.initData;
+    const searchParams = new URLSearchParams(window.location.search);
+    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+    const tgWebAppData =
+      searchParams.get('tgWebAppData') || hashParams.get('tgWebAppData') || '';
+    const initDataFromUrl = tgWebAppData ? decodeURIComponent(tgWebAppData) : '';
+
+    const initData = tgWindow.Telegram?.WebApp?.initData || initDataFromUrl;
     if (!initData) return;
 
     setLoading(true);
