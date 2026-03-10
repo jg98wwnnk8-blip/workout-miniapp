@@ -31,8 +31,12 @@ export async function authWebApp(initData: string): Promise<{ access_token: stri
   });
 }
 
-export async function fetchWorkouts(token: string): Promise<WorkoutListResponse> {
-  return http('/workouts?limit=20&offset=0', {
+export async function fetchWorkouts(
+  token: string,
+  limit = 20,
+  offset = 0
+): Promise<WorkoutListResponse> {
+  return http(`/workouts?limit=${limit}&offset=${offset}`, {
     method: 'GET',
     headers: authHeaders(token)
   });

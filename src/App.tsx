@@ -30,6 +30,8 @@ export function App(): JSX.Element {
   const [filters, setFilters] = useState<FiltersResponse | null>(null);
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
+  const [loadingMore, setLoadingMore] = useState<boolean>(false);
+  const [historyTotal, setHistoryTotal] = useState<number>(0);
   const [view, setView] = useState<ViewMode>('history');
 
   const hasToken = useMemo(() => Boolean(token), [token]);
@@ -91,6 +93,7 @@ export function App(): JSX.Element {
         setWorkouts(workoutsResp.items);
         setSearchItems([]);
         setFilters(filtersResp);
+        setHistoryTotal(workoutsResp.total);
       })
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
@@ -153,10 +156,26 @@ export function App(): JSX.Element {
       setSearchItems([]);
       setDetail(null);
       setView('history');
+      setHistoryTotal(res.total);
     } catch (e) {
       setError((e as Error).message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadMoreHistory = async (): Promise<void> => {
+    if (loadingMore) return;
+    setLoadingMore(true);
+    setError('');
+    try {
+      const res = await fetchWorkouts(token, 20, workouts.length);
+      setWorkouts((prev) => [...prev, ...res.items]);
+      setHistoryTotal(res.total);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setLoadingMore(false);
     }
   };
 
@@ -217,6 +236,11 @@ export function App(): JSX.Element {
                 <button onClick={resetToHistory}>Обновить</button>
               </div>
               <WorkoutList items={workouts} onOpen={openWorkout} />
+              {workouts.length < historyTotal && (
+                <button onClick={loadMoreHistory} disabled={loadingMore}>
+                  {loadingMore ? 'Загрузка...' : 'Загрузить еще'}
+                </button>
+              )}
             </section>
           )}
 
