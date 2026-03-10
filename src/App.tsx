@@ -31,6 +31,7 @@ export function App(): JSX.Element {
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [view, setView] = useState<ViewMode>('history');
+  const [debugInfo, setDebugInfo] = useState<string>('');
 
   const hasToken = useMemo(() => Boolean(token), [token]);
 
@@ -51,17 +52,49 @@ export function App(): JSX.Element {
       searchParams.get('tgWebAppData') || hashParams.get('tgWebAppData') || '';
     const initDataFromUrl = tgWebAppData ? decodeURIComponent(tgWebAppData) : '';
 
-    const initData = tgWindow.Telegram?.WebApp?.initData || initDataFromUrl;
-    if (!initData) return;
+    const tryAuth = (initData: string) => {
+      setLoading(true);
+      authWebApp(initData)
+        .then((auth) => {
+          setToken(auth.access_token);
+          window.localStorage.setItem('mini_app_access_token', auth.access_token);
+        })
+        .catch((e: Error) => setError(e.message))
+        .finally(() => setLoading(false));
+    };
 
-    setLoading(true);
-    authWebApp(initData)
-      .then((auth) => {
-        setToken(auth.access_token);
-        window.localStorage.setItem('mini_app_access_token', auth.access_token);
-      })
-      .catch((e: Error) => setError(e.message))
-      .finally(() => setLoading(false));
+    const reportDebug = (initDataValue: string) => {
+      const hasTelegram = Boolean(tgWindow.Telegram?.WebApp);
+      const info = [
+        `telegram=${hasTelegram ? 'yes' : 'no'}`,
+        `initDataLen=${initDataValue.length}`,
+        `urlDataLen=${initDataFromUrl.length}`,
+        `url=${window.location.href}`
+      ].join(' | ');
+      setDebugInfo(info);
+    };
+
+    const initData = tgWindow.Telegram?.WebApp?.initData || initDataFromUrl;
+    reportDebug(initData || '');
+    if (initData) {
+      tryAuth(initData);
+      return;
+    }
+
+    let attempts = 0;
+    const timer = window.setInterval(() => {
+      attempts += 1;
+      const liveInitData = tgWindow.Telegram?.WebApp?.initData || '';
+      reportDebug(liveInitData || initDataFromUrl);
+      if (liveInitData) {
+        window.clearInterval(timer);
+        tryAuth(liveInitData);
+      } else if (attempts >= 10) {
+        window.clearInterval(timer);
+      }
+    }, 300);
+
+    return () => window.clearInterval(timer);
   }, []);
 
   useEffect(() => {
@@ -176,6 +209,7 @@ export function App(): JSX.Element {
         <section className="panel">
           <h3>Авторизация</h3>
           <p className="muted">Если Mini App открыт не из Telegram, вставь initData вручную:</p>
+          {debugInfo && <p className="muted">Debug: {debugInfo}</p>}
           <textarea
             value={initDataInput}
             onChange={(e) => setInitDataInput(e.target.value)}
